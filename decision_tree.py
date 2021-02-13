@@ -29,13 +29,14 @@ class node:
 class decision_tree:
 
 
-    def __init__(self, base = 2,epsilon = 0.2):
+    def __init__(self, base = 2,epsilon = 0.2,algo="ID3"):
 
 
         self.data = pd.read_excel("Data.xlsx",engine="openpyxl",index=False)
         self.base = base
         #self.feature_list = [ i for i in self.data.columns[1:] ]
         self.epsilon = epsilon
+        self.algo = algo
         self.tree_root = self.construct_tree(self.data)
 
 
@@ -92,12 +93,10 @@ class decision_tree:
 
             HAD += (-p*math.log(p,self.base))
 
-        print(HAD)
-
         return ((self.mutual_information(ent,cond_ent))/HAD)
 
 
-    def Get_Best_Feature(self,data,algo = "ID3"):
+    def Get_Best_Feature(self,data):
 
         HD = self.empirical_entropy(data)
 
@@ -107,18 +106,18 @@ class decision_tree:
 
             HDA = self.empirical_conditional_entropy(data,i)
 
-            if algo == "ID3":
+            if self.algo == "ID3":
 
                 ent_list.append((i,data.columns[i],self.mutual_information(HD,HDA)))
 
-            elif algo == "C4.5":
+            elif self.algo == "C4.5":
 
                 ent_list.append((i,data.columns[i],self.information_gain_ratio(HD,HDA,data,i)))
 
         return max(ent_list,key = lambda x:x[-1])
     
 
-    def construct_tree(self,data,algo="ID3"):
+    def construct_tree(self,data):
 
 
         class_data = data.iloc[:,0].unique()
@@ -134,7 +133,7 @@ class decision_tree:
             return node(leave=True,class_type=data.iloc[:,0].value_counts().sort_values(ascending=False).index[0])
 
 
-        max_feature_pos,max_feature_name,max_feature_ent = self.Get_Best_Feature(data,algo)
+        max_feature_pos,max_feature_name,max_feature_ent = self.Get_Best_Feature(data)
 
         if max_feature_ent < self.epsilon:
 
