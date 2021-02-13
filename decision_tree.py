@@ -78,8 +78,26 @@ class decision_tree:
 
         return (ent - cond_ent)
 
+    def information_gain_ratio(self,ent,cond_ent,data,dim):
 
-    def Get_Best_Feature(self,data):
+        f_value_list = data.iloc[:,dim].unique()
+
+        D = data.shape[0]
+
+        HAD = 0
+
+        for i in f_value_list:
+
+            p = (data.loc[data[data.columns[dim]]==i].shape[0])/D
+
+            HAD += (-p*math.log(p,self.base))
+
+        print(HAD)
+
+        return ((self.mutual_information(ent,cond_ent))/HAD)
+
+
+    def Get_Best_Feature(self,data,algo = "ID3"):
 
         HD = self.empirical_entropy(data)
 
@@ -89,12 +107,19 @@ class decision_tree:
 
             HDA = self.empirical_conditional_entropy(data,i)
 
-            ent_list.append((i,data.columns[i],self.mutual_information(HD,HDA)))
+            if algo == "ID3":
+
+                ent_list.append((i,data.columns[i],self.mutual_information(HD,HDA)))
+
+            elif algo == "C4.5":
+
+                ent_list.append((i,data.columns[i],self.information_gain_ratio(HD,HDA,data,i)))
 
         return max(ent_list,key = lambda x:x[-1])
     
 
-    def construct_tree(self,data):
+    def construct_tree(self,data,algo="ID3"):
+
 
         class_data = data.iloc[:,0].unique()
         feature_list = data.columns[1:]
@@ -109,7 +134,7 @@ class decision_tree:
             return node(leave=True,class_type=data.iloc[:,0].value_counts().sort_values(ascending=False).index[0])
 
 
-        max_feature_pos,max_feature_name,max_feature_ent = self.Get_Best_Feature(data)
+        max_feature_pos,max_feature_name,max_feature_ent = self.Get_Best_Feature(data,algo)
 
         if max_feature_ent < self.epsilon:
 
@@ -128,6 +153,7 @@ class decision_tree:
 
 
         return node_tree
+
 
 
     #Case:List
